@@ -81,6 +81,9 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     
     // Hide traffic lights
     [self hideTrafficLights];
+    
+    // Modify titlebar appearance
+    [self modifyTitlebarAppearance];
 }
 
 // Hide traffic lights
@@ -101,11 +104,21 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     }
 }
 
-// Remove traffic light
-- (void)removeButton:(NSButton*)button {
-    if (button) {
-        [button removeFromSuperview];
-    }
+// Modify titlebar appearance
+- (void)modifyTitlebarAppearance {
+    NSWindow *window = (NSWindow *)self;
+    
+    // Make titlebar transparent
+    window.titlebarAppearsTransparent = YES;
+    
+    // Hide title
+    window.titleVisibility = NSWindowTitleHidden;
+    
+    // Allow clicking and dragging on the entire window
+    [window setMovableByWindowBackground:YES];
+    
+    // Extend content into the titlebar area
+    window.styleMask |= NSWindowStyleMaskFullSizeContentView;
 }
 
 @end
