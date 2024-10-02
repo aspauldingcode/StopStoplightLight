@@ -84,6 +84,9 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     
     // Modify titlebar appearance
     [self modifyTitlebarAppearance];
+
+    // Make all windows resizable to any size
+    [self makeResizableToAnySize];
 }
 
 // Hide traffic lights
@@ -119,11 +122,52 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     
     // Extend content into the titlebar area
     window.styleMask |= NSWindowStyleMaskFullSizeContentView;
-    
-    // Ignore window size constraints
-    window.resizeIncrements = NSMakeSize(1.0, 1.0);
-    window.contentResizeIncrements = NSMakeSize(1.0, 1.0);
-    window.minSize = NSMakeSize(100.0, 100.0); // Set minimum window size
+}
+
+// Make all windows resizable to any size
+- (void)makeResizableToAnySize {
+    NSWindow *window = (NSWindow *)self;
+
+    // Allow resizing to any size
+    window.styleMask |= NSWindowStyleMaskResizable;
+
+    // Remove size constraints set on the window's content view
+    [self removeContentViewConstraints];
+
+    // Remove size constraints set on any subviews
+    [self removeSubviewConstraints:window.contentView];
+
+    // Remove minimum and maximum size limitations
+    window.minSize = NSMakeSize(0.0, 0.0); // Set minimum window size
+    window.maxSize = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX); // Set maximum window size
+}
+
+// Remove constraints from the content view
+- (void)removeContentViewConstraints {
+    NSView *contentView = [(NSWindow *)self contentView];
+    [contentView setTranslatesAutoresizingMaskIntoConstraints:YES];
+    [contentView removeConstraints:[contentView constraints]];
+}
+
+// Recursively remove constraints from all subviews
+- (void)removeSubviewConstraints:(NSView *)view {
+    for (NSView *subview in [view subviews]) {
+        [subview setTranslatesAutoresizingMaskIntoConstraints:YES];
+        [subview removeConstraints:[subview constraints]];
+        [self removeSubviewConstraints:subview]; // Recursive call
+    }
+}
+
+@end
+
+ZKSwizzleInterface(BS_NSWindowDelegate, NSObject<NSWindowDelegate>, NSObject)
+
+@implementation BS_NSWindowDelegate
+
+// Override windowWillResize delegate method
+- (NSSize)windowWillResize:(NSWindow *)window toSize:(NSSize)proposedFrameSize {
+    // Allow any size
+    return proposedFrameSize;
 }
 
 @end
