@@ -21,7 +21,7 @@ clean:
 test: build
 	killall "MacForgeHelper" || true
 	killall MacForge || true
-	rm -rf $(INSTALL_DIR)/$(TARGET).bundle
+	sudo rm -rf $(INSTALL_DIR)/$(TARGET).bundle
 	sudo cp -r $(BUILD_DIR)/$(TARGET).bundle $(INSTALL_DIR)
 	killall "System Settings" || true
 	open -a "MacForge"
