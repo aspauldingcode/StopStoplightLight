@@ -21,9 +21,10 @@ clean:
 test: build
 	killall "MacForgeHelper" || true
 	killall MacForge || true
-	sudo cp -r $(BUILD_DIR)/Build/Products/Release/$(TARGET).bundle $(INSTALL_DIR)
+	sudo cp -r $(BUILD_DIR)/$(TARGET).bundle $(INSTALL_DIR)
 	killall "System Settings" || true
 	open -a "MacForge"
+	sleep 2
 	open -a "System Settings"
 
 .PHONY: all build clean test
