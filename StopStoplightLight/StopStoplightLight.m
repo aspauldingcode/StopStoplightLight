@@ -117,8 +117,8 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     // Hide title
     window.titleVisibility = NSWindowTitleHidden;
     
-    // Allow clicking and dragging on the entire window
-    [window setMovableByWindowBackground:YES];
+    // // Allow clicking and dragging on the entire window
+    // [window setMovableByWindowBackground:YES];
     
     // Extend content into the titlebar area
     window.styleMask |= NSWindowStyleMaskFullSizeContentView;
