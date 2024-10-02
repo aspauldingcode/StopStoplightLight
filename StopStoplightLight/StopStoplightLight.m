@@ -119,6 +119,11 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     
     // Extend content into the titlebar area
     window.styleMask |= NSWindowStyleMaskFullSizeContentView;
+    
+    // Ignore window size constraints
+    window.resizeIncrements = NSMakeSize(1.0, 1.0);
+    window.contentResizeIncrements = NSMakeSize(1.0, 1.0);
+    window.minSize = NSMakeSize(100.0, 100.0); // Set minimum window size
 }
 
 @end
