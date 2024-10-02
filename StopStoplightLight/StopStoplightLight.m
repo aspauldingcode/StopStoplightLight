@@ -131,43 +131,53 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     // Allow resizing to any size
     window.styleMask |= NSWindowStyleMaskResizable;
 
-    // Remove size constraints set on the window's content view
-    [self removeContentViewConstraints];
+    // Adjust size constraints set on the window's content view
+    // [self adjustContentViewConstraints];
 
-    // Remove size constraints set on any subviews
-    [self removeSubviewConstraints:window.contentView];
+    // Adjust size constraints set on any subviews
+    // [self adjustSubviewConstraints:window.contentView];
 
     // Remove minimum and maximum size limitations
     window.minSize = NSMakeSize(0.0, 0.0); // Set minimum window size
     window.maxSize = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX); // Set maximum window size
 }
 
-// Remove constraints from the content view
-- (void)removeContentViewConstraints {
+// Adjust constraints from the content view
+- (void)adjustContentViewConstraints {
     NSView *contentView = [(NSWindow *)self contentView];
-    [contentView setTranslatesAutoresizingMaskIntoConstraints:YES];
-    [contentView removeConstraints:[contentView constraints]];
-}
-
-// Recursively remove constraints from all subviews
-- (void)removeSubviewConstraints:(NSView *)view {
-    for (NSView *subview in [view subviews]) {
-        [subview setTranslatesAutoresizingMaskIntoConstraints:YES];
-        [subview removeConstraints:[subview constraints]];
-        [self removeSubviewConstraints:subview]; // Recursive call
+    [contentView setTranslatesAutoresizingMaskIntoConstraints:NO];
+    for (NSLayoutConstraint *constraint in [contentView constraints]) {
+        if (constraint.firstAttribute == NSLayoutAttributeWidth || constraint.firstAttribute == NSLayoutAttributeHeight) {
+            [contentView removeConstraint:constraint];
+        }
     }
+    // Add constraints to ensure content is rendered properly
+    [contentView setNeedsDisplay:YES];
+    
+    // Reapply constraints when the window becomes active
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidBecomeKey:)
+                                                 name:NSWindowDidBecomeKeyNotification
+                                               object:self];
 }
 
-@end
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    [self adjustContentViewConstraints];
+}
 
-ZKSwizzleInterface(BS_NSWindowDelegate, NSObject<NSWindowDelegate>, NSObject)
-
-@implementation BS_NSWindowDelegate
-
-// Override windowWillResize delegate method
-- (NSSize)windowWillResize:(NSWindow *)window toSize:(NSSize)proposedFrameSize {
-    // Allow any size
-    return proposedFrameSize;
+// Recursively adjust constraints from all subviews
+- (void)adjustSubviewConstraints:(NSView *)view {
+    for (NSView *subview in [view subviews]) {
+        [subview setTranslatesAutoresizingMaskIntoConstraints:NO];
+        for (NSLayoutConstraint *constraint in [subview constraints]) {
+            if (constraint.firstAttribute == NSLayoutAttributeWidth || constraint.firstAttribute == NSLayoutAttributeHeight) {
+                [subview removeConstraint:constraint];
+            }
+        }
+        // Add constraints to ensure subview content is rendered properly
+        [subview setNeedsDisplay:YES];
+        [self adjustSubviewConstraints:subview]; // Recursive call
+    }
 }
 
 @end
