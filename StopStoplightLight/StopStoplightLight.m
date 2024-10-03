@@ -17,6 +17,7 @@
 #include <os/log.h>
 #define DLog(N, ...) os_log_with_type(os_log_create("com.shishkabibal.StopStoplightLight", "DEBUG"),OS_LOG_TYPE_DEFAULT,N ,##__VA_ARGS__)
 
+#import "WindowOutliningController.h"
 
 #pragma mark - Global Variables
 
@@ -30,6 +31,7 @@ static NSString *const preferencesSuiteName = @"com.shishkabibal.StopStoplightLi
 
 @interface StopStoplightLight : NSObject
 + (instancetype)sharedInstance;
+@property (strong, nonatomic) WindowOutliningController *windowOutliningController;
 @end
 
 StopStoplightLight* plugin;
@@ -42,8 +44,10 @@ StopStoplightLight* plugin;
 + (StopStoplightLight*)sharedInstance {
     static StopStoplightLight* plugin = nil;
     
-    if (!plugin)
+    if (!plugin) {
         plugin = [[StopStoplightLight alloc] init];
+        plugin.windowOutliningController = [[WindowOutliningController alloc] init];
+    }
     
     return plugin;
 }
@@ -87,6 +91,9 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
 
     // Make all windows resizable to any size
     [self makeResizableToAnySize];
+    
+    // Add this line to update the border
+    [plugin.windowOutliningController updateBorderColor];
 }
 
 // Hide traffic lights

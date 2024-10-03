@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong) NSMenuItem *purpleItem;
 @property (strong) NSArray *colorItems;
 @property (strong) NSMenu *menu;
+- (void)updateBorderColor;
 @end
 
 NS_ASSUME_NONNULL_END

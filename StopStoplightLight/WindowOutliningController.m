@@ -85,9 +85,12 @@
  */
 - (void)updateBorderColor {
     NSWindow *window = [NSWindow topWindow];
+    NSLog(@"Updating border color for window: %@", window);
     if (window.isKeyWindow) {
+        NSLog(@"Window is key, setting white border");
         [self addBorderWithColor:self.NSColorWhite.CGColor];
     } else {
+        NSLog(@"Window is not key, setting purple border");
         [self addBorderWithColor:self.NSColorPurple.CGColor];
     }
 }
