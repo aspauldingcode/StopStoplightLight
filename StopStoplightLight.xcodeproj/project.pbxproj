@@ -11,6 +11,7 @@
 		D388E75E2093868300441C31 /* StopStoplightLight.m in Sources */ = {isa = PBXBuildFile; fileRef = D388E75B2093868300441C31 /* StopStoplightLight.m */; };
 		D3B2DA622B2A000B006AA5E0 /* Icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = D3B2DA612B2A000B006AA5E0 /* Icon.icns */; };
 		FAA8D2292CAE4C0E00D22F47 /* WindowOutliningController.m in Sources */ = {isa = PBXBuildFile; fileRef = FAA8D2282CAE4C0100D22F47 /* WindowOutliningController.m */; };
+		FAA8D22F2CAE4E1800D22F47 /* NSWindow+StopStoplightLight.m in Sources */ = {isa = PBXBuildFile; fileRef = FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,8 @@
 		D3B2DA612B2A000B006AA5E0 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
 		FAA8D2272CAE4BAE00D22F47 /* WindowOutliningController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WindowOutliningController.h; sourceTree = "<group>"; };
 		FAA8D2282CAE4C0100D22F47 /* WindowOutliningController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WindowOutliningController.m; sourceTree = "<group>"; };
+		FAA8D22C2CAE4DD900D22F47 /* NSWindow+StopStoplightLight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSWindow+StopStoplightLight.h"; sourceTree = "<group>"; };
+		FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+StopStoplightLight.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +62,7 @@
 				D388E7582093868300441C31 /* ZKSwizzle */,
 				D388E75B2093868300441C31 /* StopStoplightLight.m */,
 				FAA8D2282CAE4C0100D22F47 /* WindowOutliningController.m */,
+				FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */,
 				D3F2E9802B25024F00FE807F /* Headers */,
 				D3F2E97E2B25021000FE807F /* Resources */,
 			);
@@ -86,6 +90,7 @@
 		D3F2E9802B25024F00FE807F /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				FAA8D22C2CAE4DD900D22F47 /* NSWindow+StopStoplightLight.h */,
 				FAA8D2272CAE4BAE00D22F47 /* WindowOutliningController.h */,
 				D37795A62C2B80AF0007CA4F /* NSWindow.h */,
 			);
@@ -131,6 +136,7 @@
 				TargetAttributes = {
 					D388E74E2093866B00441C31 = {
 						CreatedOnToolsVersion = 9.3;
+						LastSwiftMigration = 1600;
 					};
 				};
 			};
@@ -168,6 +174,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FAA8D22F2CAE4E1800D22F47 /* NSWindow+StopStoplightLight.m in Sources */,
 				D388E75E2093868300441C31 /* StopStoplightLight.m in Sources */,
 				FAA8D2292CAE4C0E00D22F47 /* WindowOutliningController.m in Sources */,
 				D388E75D2093868300441C31 /* ZKSwizzle.m in Sources */,
@@ -315,6 +322,7 @@
 					arm64e,
 					x86_64,
 				);
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/";
@@ -331,6 +339,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.shishkabibal.StopStoplightLight;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "StopStoplightLight/StopStoplightLight-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
 				SYSTEM_FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks",
@@ -346,6 +357,7 @@
 					arm64e,
 					x86_64,
 				);
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
@@ -361,6 +373,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.shishkabibal.StopStoplightLight;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "StopStoplightLight/StopStoplightLight-Bridging-Header.h";
+				SWIFT_VERSION = 6.0;
 				SYSTEM_FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks",
