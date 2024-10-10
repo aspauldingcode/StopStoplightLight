@@ -26,8 +26,12 @@ NSStatusItem *statusItem;
 
 static NSString *const preferencesSuiteName = @"com.shishkabibal.StopStoplightLight";
 
-// Debug flag to enable/disable WindowOutliningController
+// Debug flag to enable/disable WindowOutliningController, Traffic Lights, and Titlebar Customization
 static BOOL enableWindowOutlining = NO;
+static BOOL enableTrafficLights = YES;
+static BOOL enableTitlebarCustomization = YES;
+static BOOL enableResizability = YES;
+
 
 #pragma mark - Main Interface
 
@@ -60,11 +64,6 @@ StopStoplightLight* plugin;
 + (void)load {
     // Create plugin singleton + bundle & statusItem
     plugin = [StopStoplightLight sharedInstance];
-        
-//    // Log loading
-//    NSUInteger major = [[NSProcessInfo processInfo] operatingSystemVersion].majorVersion;
-//    NSUInteger minor = [[NSProcessInfo processInfo] operatingSystemVersion].minorVersion;
-//    DLog("%{public}@: Loaded (%{public}@ - macOS %ld.%ld)", [self className], [[NSBundle mainBundle] bundleIdentifier], (long)major, (long)minor);
 }
 
 @end
@@ -87,16 +86,22 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     // Call original method
     ZKOrig(void, sender);
     
-    // Hide traffic lights
-    [self hideTrafficLights];
+    // Conditionally hide traffic lights
+    if (enableTrafficLights) {
+        [self hideTrafficLights];
+    }
     
-    // Modify titlebar appearance
-    [self modifyTitlebarAppearance];
+    // Conditionally modify titlebar appearance
+    if (enableTitlebarCustomization) {
+        [self modifyTitlebarAppearance];
+    }
 
-    // Make all windows resizable to any size
-    [self makeResizableToAnySize];
+    // Conditionally make windows resizable
+    if (enableResizability) {
+        [self makeResizableToAnySize];
+    }
     
-    // Add this line to update the border, but only if WindowOutliningController is enabled
+    // Update the border if WindowOutliningController is enabled
     if (enableWindowOutlining && plugin.windowOutliningController) {
         [plugin.windowOutliningController updateBorderColor];
     }
@@ -143,12 +148,6 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
 
     // Allow resizing to any size
     window.styleMask |= NSWindowStyleMaskResizable;
-
-    // Adjust size constraints set on the window's content view
-    // [self adjustContentViewConstraints];
-
-    // Adjust size constraints set on any subviews
-    // [self adjustSubviewConstraints:window.contentView];
 
     // Remove minimum and maximum size limitations
     window.minSize = NSMakeSize(0.0, 0.0); // Set minimum window size
