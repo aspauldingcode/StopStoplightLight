@@ -26,6 +26,8 @@ NSStatusItem *statusItem;
 
 static NSString *const preferencesSuiteName = @"com.shishkabibal.StopStoplightLight";
 
+// Debug flag to enable/disable WindowOutliningController
+static BOOL enableWindowOutlining = NO;
 
 #pragma mark - Main Interface
 
@@ -46,7 +48,9 @@ StopStoplightLight* plugin;
     
     if (!plugin) {
         plugin = [[StopStoplightLight alloc] init];
-        plugin.windowOutliningController = [[WindowOutliningController alloc] init];
+        if (enableWindowOutlining) {
+            plugin.windowOutliningController = [[WindowOutliningController alloc] init];
+        }
     }
     
     return plugin;
@@ -92,8 +96,10 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     // Make all windows resizable to any size
     [self makeResizableToAnySize];
     
-    // Add this line to update the border
-    [plugin.windowOutliningController updateBorderColor];
+    // Add this line to update the border, but only if WindowOutliningController is enabled
+    if (enableWindowOutlining && plugin.windowOutliningController) {
+        [plugin.windowOutliningController updateBorderColor];
+    }
 }
 
 // Hide traffic lights
