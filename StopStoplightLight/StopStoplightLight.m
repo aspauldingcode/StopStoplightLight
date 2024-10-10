@@ -28,8 +28,8 @@ static NSString *const preferencesSuiteName = @"com.shishkabibal.StopStoplightLi
 
 // Debug flag to enable/disable WindowOutliningController, Traffic Lights, and Titlebar Customization
 static BOOL enableWindowOutlining = NO;
-static BOOL enableTrafficLights = YES;
-static BOOL enableTitlebarCustomization = YES;
+static BOOL enableTrafficLightsDisabler = NO;
+static BOOL enableTitlebarDisabler = YES;
 static BOOL enableResizability = YES;
 
 
@@ -87,12 +87,12 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     ZKOrig(void, sender);
     
     // Conditionally hide traffic lights
-    if (enableTrafficLights) {
+    if (enableTrafficLightsDisabler) {
         [self hideTrafficLights];
     }
     
     // Conditionally modify titlebar appearance
-    if (enableTitlebarCustomization) {
+    if (enableTitlebarDisabler) {
         [self modifyTitlebarAppearance];
     }
 
