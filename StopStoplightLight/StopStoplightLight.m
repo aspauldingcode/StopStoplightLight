@@ -9,187 +9,136 @@
 #pragma mark - Library/Header Imports
 
 @import AppKit;
-
 #import <objc/runtime.h>
-
 #import "ZKSwizzle.h"
+#import "NSWindow+StopStoplightLight.h"
 
 #include <os/log.h>
-#define DLog(N, ...) os_log_with_type(os_log_create("com.shishkabibal.StopStoplightLight", "DEBUG"),OS_LOG_TYPE_DEFAULT,N ,##__VA_ARGS__)
-
-#import "WindowOutliningController.h"
+#define DLog(N, ...) os_log_with_type(os_log_create("com.shishkabibal.StopStoplightLight", "DEBUG"), OS_LOG_TYPE_DEFAULT, N, ##__VA_ARGS__)
 
 #pragma mark - Global Variables
 
-NSBundle *bundle;
-NSStatusItem *statusItem;
-
 static NSString *const preferencesSuiteName = @"com.shishkabibal.StopStoplightLight";
 
-// Debug flag to enable/disable WindowOutliningController, Traffic Lights, and Titlebar Customization
-static BOOL enableWindowOutlining = NO;
-static BOOL enableTrafficLightsDisabler = NO;
+// Feature flags
+static BOOL enableTrafficLightsDisabler = YES;
 static BOOL enableTitlebarDisabler = YES;
 static BOOL enableResizability = YES;
-
-
-#pragma mark - Main Interface
-
-@interface StopStoplightLight : NSObject
-+ (instancetype)sharedInstance;
-@property (strong, nonatomic) WindowOutliningController *windowOutliningController;
-@end
-
-StopStoplightLight* plugin;
-
+static BOOL enableWindowBorders = YES;
 
 #pragma mark - Main Implementation
 
+@interface StopStoplightLight ()
+
+@end
+
 @implementation StopStoplightLight
 
-+ (StopStoplightLight*)sharedInstance {
-    static StopStoplightLight* plugin = nil;
-    
-    if (!plugin) {
-        plugin = [[StopStoplightLight alloc] init];
-        if (enableWindowOutlining) {
-            plugin.windowOutliningController = [[WindowOutliningController alloc] init];
-        }
-    }
-    
-    return plugin;
++ (instancetype)sharedInstance {
+    static StopStoplightLight *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[self alloc] init];
+    });
+    return sharedInstance;
 }
 
-// Called on MacForge plugin initialization
 + (void)load {
-    // Create plugin singleton + bundle & statusItem
-    plugin = [StopStoplightLight sharedInstance];
+    [self sharedInstance];
 }
 
 @end
 
+#pragma mark - NSWindow Swizzling
 
-#pragma mark - *** Handling
-
-ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
+ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
 
 @implementation BS_NSWindow
 
-// "Returns the window button of a given window button kind in the window's view hierarchy."
 - (nullable NSButton *)standardWindowButton:(NSWindowButton)b {
-    // Call original method
     return ZKOrig(NSButton*, b);
 }
 
-// "Moves the window to the front of the screen list, within its level, and makes it the key window; that is, it shows the window."
 - (void)makeKeyAndOrderFront:(id)sender {
-    // Call original method
     ZKOrig(void, sender);
     
-    // Conditionally hide traffic lights
+    if (enableTitlebarDisabler) {
+        [self modifyTitlebarAppearance];
+    }
+    
     if (enableTrafficLightsDisabler) {
         [self hideTrafficLights];
     }
     
-    // Conditionally modify titlebar appearance
-    if (enableTitlebarDisabler) {
-        [self modifyTitlebarAppearance];
-    }
-
-    // Conditionally make windows resizable
     if (enableResizability) {
         [self makeResizableToAnySize];
     }
     
-    // Update the border if WindowOutliningController is enabled
-    if (enableWindowOutlining && plugin.windowOutliningController) {
-        [plugin.windowOutliningController updateBorderColor];
+    if (enableWindowBorders) {
+        [self addWindowBorders];
     }
 }
 
-// Hide traffic lights
+- (void)orderOut:(id)sender {
+    ZKOrig(void, sender);
+}
+
+- (void)becomeKeyWindow {
+    ZKOrig(void);
+}
+
+- (void)resignKeyWindow {
+    ZKOrig(void);
+}
+
 - (void)hideTrafficLights {
-    NSButton* close = [self standardWindowButton:NSWindowCloseButton];
-    NSButton* miniaturize = [self standardWindowButton:NSWindowMiniaturizeButton];
-    NSButton* zoom = [self standardWindowButton:NSWindowZoomButton];
-
-    [self hideButton:close];
-    [self hideButton:miniaturize];
-    [self hideButton:zoom];
+    [self hideButton:[self standardWindowButton:NSWindowCloseButton]];
+    [self hideButton:[self standardWindowButton:NSWindowMiniaturizeButton]];
+    [self hideButton:[self standardWindowButton:NSWindowZoomButton]];
 }
 
-// Hide traffic light
-- (void)hideButton:(NSButton*)button {
-    if (button) {
-        button.hidden = YES;
-    }
+- (void)hideButton:(NSButton *)button {
+    button.hidden = YES;
 }
 
-// Modify titlebar appearance
 - (void)modifyTitlebarAppearance {
     NSWindow *window = (NSWindow *)self;
-    
-    // Make titlebar transparent
     window.titlebarAppearsTransparent = YES;
-    
-    // Hide title
     window.titleVisibility = NSWindowTitleHidden;
-    
-    // // Allow clicking and dragging on the entire window
-    // [window setMovableByWindowBackground:YES];
-    
-    // Extend content into the titlebar area
     window.styleMask |= NSWindowStyleMaskFullSizeContentView;
+    window.contentView.wantsLayer = YES; // Ensure contentView is layer-backed
 }
 
-// Make all windows resizable to any size
 - (void)makeResizableToAnySize {
     NSWindow *window = (NSWindow *)self;
-
-    // Allow resizing to any size
     window.styleMask |= NSWindowStyleMaskResizable;
-
-    // Remove minimum and maximum size limitations
-    window.minSize = NSMakeSize(0.0, 0.0); // Set minimum window size
-    window.maxSize = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX); // Set maximum window size
+    [window setMinSize:NSMakeSize(0.0, 0.0)];
+    [window setMaxSize:NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)];
 }
 
-// Adjust constraints from the content view
-- (void)adjustContentViewConstraints {
-    NSView *contentView = [(NSWindow *)self contentView];
-    [contentView setTranslatesAutoresizingMaskIntoConstraints:NO];
-    for (NSLayoutConstraint *constraint in [contentView constraints]) {
-        if (constraint.firstAttribute == NSLayoutAttributeWidth || constraint.firstAttribute == NSLayoutAttributeHeight) {
-            [contentView removeConstraint:constraint];
-        }
+- (void)addWindowBorders {
+    NSWindow *window = (NSWindow *)self;
+    if (!window.contentView.layer) {
+        window.contentView.wantsLayer = YES;
     }
-    // Add constraints to ensure content is rendered properly
-    [contentView setNeedsDisplay:YES];
+    window.contentView.layer.borderWidth = 2.0;
+    window.contentView.layer.borderColor = [NSColor whiteColor].CGColor;
+    window.contentView.layer.cornerRadius = 5.0;
+    window.contentView.layer.masksToBounds = YES;
     
-    // Reapply constraints when the window becomes active
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(windowDidBecomeKey:)
-                                                 name:NSWindowDidBecomeKeyNotification
-                                               object:self];
+    // Set inactive borders to dark gray
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidResignKey:) name:NSWindowDidResignKeyNotification object:window];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidBecomeKey:) name:NSWindowDidBecomeKeyNotification object:window];
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+    NSWindow *window = (NSWindow *)self;
+    window.contentView.layer.borderColor = [NSColor darkGrayColor].CGColor;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    [self adjustContentViewConstraints];
-}
-
-// Recursively adjust constraints from all subviews
-- (void)adjustSubviewConstraints:(NSView *)view {
-    for (NSView *subview in [view subviews]) {
-        [subview setTranslatesAutoresizingMaskIntoConstraints:NO];
-        for (NSLayoutConstraint *constraint in [subview constraints]) {
-            if (constraint.firstAttribute == NSLayoutAttributeWidth || constraint.firstAttribute == NSLayoutAttributeHeight) {
-                [subview removeConstraint:constraint];
-            }
-        }
-        // Add constraints to ensure subview content is rendered properly
-        [subview setNeedsDisplay:YES];
-        [self adjustSubviewConstraints:subview]; // Recursive call
-    }
+    NSWindow *window = (NSWindow *)self;
+    window.contentView.layer.borderColor = [NSColor whiteColor].CGColor;
 }
 
 @end

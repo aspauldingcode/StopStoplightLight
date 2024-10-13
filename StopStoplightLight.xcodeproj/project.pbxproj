@@ -10,7 +10,6 @@
 		D388E75D2093868300441C31 /* ZKSwizzle.m in Sources */ = {isa = PBXBuildFile; fileRef = D388E7592093868300441C31 /* ZKSwizzle.m */; };
 		D388E75E2093868300441C31 /* StopStoplightLight.m in Sources */ = {isa = PBXBuildFile; fileRef = D388E75B2093868300441C31 /* StopStoplightLight.m */; };
 		D3B2DA622B2A000B006AA5E0 /* Icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = D3B2DA612B2A000B006AA5E0 /* Icon.icns */; };
-		FAA8D2292CAE4C0E00D22F47 /* WindowOutliningController.m in Sources */ = {isa = PBXBuildFile; fileRef = FAA8D2282CAE4C0100D22F47 /* WindowOutliningController.m */; };
 		FAA8D22F2CAE4E1800D22F47 /* NSWindow+StopStoplightLight.m in Sources */ = {isa = PBXBuildFile; fileRef = FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */; };
 /* End PBXBuildFile section */
 
@@ -22,8 +21,6 @@
 		D388E75A2093868300441C31 /* ZKSwizzle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZKSwizzle.h; sourceTree = "<group>"; };
 		D388E75B2093868300441C31 /* StopStoplightLight.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StopStoplightLight.m; sourceTree = "<group>"; };
 		D3B2DA612B2A000B006AA5E0 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
-		FAA8D2272CAE4BAE00D22F47 /* WindowOutliningController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WindowOutliningController.h; sourceTree = "<group>"; };
-		FAA8D2282CAE4C0100D22F47 /* WindowOutliningController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WindowOutliningController.m; sourceTree = "<group>"; };
 		FAA8D22C2CAE4DD900D22F47 /* NSWindow+StopStoplightLight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSWindow+StopStoplightLight.h"; sourceTree = "<group>"; };
 		FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+StopStoplightLight.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -61,7 +58,6 @@
 			children = (
 				D388E7582093868300441C31 /* ZKSwizzle */,
 				D388E75B2093868300441C31 /* StopStoplightLight.m */,
-				FAA8D2282CAE4C0100D22F47 /* WindowOutliningController.m */,
 				FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */,
 				D3F2E9802B25024F00FE807F /* Headers */,
 				D3F2E97E2B25021000FE807F /* Resources */,
@@ -91,7 +87,6 @@
 			isa = PBXGroup;
 			children = (
 				FAA8D22C2CAE4DD900D22F47 /* NSWindow+StopStoplightLight.h */,
-				FAA8D2272CAE4BAE00D22F47 /* WindowOutliningController.h */,
 				D37795A62C2B80AF0007CA4F /* NSWindow.h */,
 			);
 			name = Headers;
@@ -176,7 +171,6 @@
 			files = (
 				FAA8D22F2CAE4E1800D22F47 /* NSWindow+StopStoplightLight.m in Sources */,
 				D388E75E2093868300441C31 /* StopStoplightLight.m in Sources */,
-				FAA8D2292CAE4C0E00D22F47 /* WindowOutliningController.m in Sources */,
 				D388E75D2093868300441C31 /* ZKSwizzle.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
