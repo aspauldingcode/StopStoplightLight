@@ -140,307 +140,337 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
   [window setMaxSize:NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)];
 }
 
-
-
 #pragma mark - Window Border Methods
 
-    /**
-     * Creates a rounded rectangular path with the given bounds and corner radius.
-     *
-     * @param bounds The bounds of the window's content view.
-     * @param cornerRadius The radius of the window's corners.
-     * @return A CGMutablePathRef representing the rounded rectangular path.
-     */
-    - (CGMutablePathRef)createRoundedPathWithBounds:(CGRect)bounds cornerRadius:(CGFloat)cornerRadius {
-        CGMutablePathRef path = CGPathCreateMutable();
-        
-        // Start at top-left corner
-        CGPathMoveToPoint(path, NULL, cornerRadius, 0);
-        
-        // Top edge
-        CGPathAddLineToPoint(path, NULL, bounds.size.width - cornerRadius, 0);
-        
-        // Top-right corner
-        CGPathAddArcToPoint(path, NULL, bounds.size.width, 0, bounds.size.width, cornerRadius, cornerRadius);
-        
-        // Right edge
-        CGPathAddLineToPoint(path, NULL, bounds.size.width, bounds.size.height - cornerRadius);
-        
-        // Bottom-right corner
-        CGPathAddArcToPoint(path, NULL, bounds.size.width, bounds.size.height, bounds.size.width - cornerRadius, bounds.size.height, cornerRadius);
-        
-        // Bottom edge
-        CGPathAddLineToPoint(path, NULL, cornerRadius, bounds.size.height);
-        
-        // Bottom-left corner
-        CGPathAddArcToPoint(path, NULL, 0, bounds.size.height, 0, bounds.size.height - cornerRadius, cornerRadius);
-        
-        // Left edge
-        CGPathAddLineToPoint(path, NULL, 0, cornerRadius);
-        
-        // Top-left corner
-        CGPathAddArcToPoint(path, NULL, 0, 0, cornerRadius, 0, cornerRadius);
-        
-        CGPathCloseSubpath(path);
-        
-        return path;
+- (NSDictionary *)loadConfig {
+    NSString *configPath = [NSString stringWithFormat:@"%@/.config/macwmfx/config", NSHomeDirectory()];
+    NSData *configData = [NSData dataWithContentsOfFile:configPath];
+    if (configData) {
+        NSError *error;
+        NSDictionary *config = [NSJSONSerialization JSONObjectWithData:configData options:0 error:&error];
+        if (error) {
+            DLog("Error parsing config file: %@", error);
+            return @{};
+        }
+        return config;
     }
+    return @{};
+}
+
+- (CGFloat)cornerRadiusFromConfig:(NSDictionary *)config {
+    NSString *cornerRadiusString = config[@"outlineWindow"][@"cornerRadius"];
+    return cornerRadiusString.length > 0 ? [cornerRadiusString floatValue] : 40.0;
+}
+
+- (CGFloat)borderWidthFromConfig:(NSDictionary *)config {
+    NSString *widthString = config[@"outlineWindow"][@"width"];
+    return widthString.length > 0 ? [widthString floatValue] : 2.0;
+}
+
+- (NSColor *)activeColorFromConfig:(NSDictionary *)config {
+    NSString *activeColorString = config[@"outlineWindow"][@"activeColor"];
+    return activeColorString.length > 0 ? [self colorFromHexString:activeColorString] : [NSColor whiteColor];
+}
+
+- (NSColor *)inactiveColorFromConfig:(NSDictionary *)config {
+    NSString *inactiveColorString = config[@"outlineWindow"][@"inactiveColor"];
+    return inactiveColorString.length > 0 ? [self colorFromHexString:inactiveColorString] : [NSColor darkGrayColor];
+}
+
+- (NSColor *)colorFromHexString:(NSString *)hexString {
+    unsigned rgbValue = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:hexString];
+    [scanner setScanLocation:0];
+    [scanner scanHexInt:&rgbValue];
+    return [NSColor colorWithRed:((rgbValue & 0xFF0000) >> 16) / 255.0
+                           green:((rgbValue & 0x00FF00) >> 8) / 255.0
+                            blue:(rgbValue & 0x0000FF) / 255.0
+                           alpha:1.0];
+}
+
+- (CGMutablePathRef)createRoundedPathWithBounds:(CGRect)bounds cornerRadius:(CGFloat)cornerRadius {
+    CGMutablePathRef path = CGPathCreateMutable();
     
-    /**
-     * Adds borders to the window if the `enableWindowBorders` flag is set.
-     * This method ensures the contentView is layer-backed, creates a mask layer,
-     * and adds border and outline layers to the window's content view.
-     * It also sets up notifications for window state changes and resizing.
-     */
-    - (void)addWindowBorders {
-        if (!enableWindowBorders) {
-            return;
-        }
+    // Start at top-left corner
+    CGPathMoveToPoint(path, NULL, cornerRadius, 0);
     
-        NSWindow *window = (NSWindow *)self;
+    // Top edge
+    CGPathAddLineToPoint(path, NULL, bounds.size.width - cornerRadius, 0);
     
-        // Ensure the contentView is layer-backed
-        window.contentView.wantsLayer = YES;
+    // Top-right corner
+    CGPathAddArcToPoint(path, NULL, bounds.size.width, 0, bounds.size.width, cornerRadius, cornerRadius);
     
-        // Set flags for border
-        CGFloat borderWidth = 2.0;
-        CGFloat cornerRadius = 40.0;
+    // Right edge
+    CGPathAddLineToPoint(path, NULL, bounds.size.width, bounds.size.height - cornerRadius);
     
-        CALayer *contentLayer = window.contentView.layer;
-        if (contentLayer) {
-            // Remove existing mask and border/outline layers if they exist
-            if (contentLayer.mask) {
-                [contentLayer.mask removeFromSuperlayer];
-                contentLayer.mask = nil;
-            }
-            CAShapeLayer *existingOutlineLayer = objc_getAssociatedObject(self, "outlineLayer");
-            if (existingOutlineLayer) {
-                [existingOutlineLayer removeFromSuperlayer];
-                objc_setAssociatedObject(self, "outlineLayer", nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            }
-            CAShapeLayer *existingBorderLayer = objc_getAssociatedObject(self, "borderLayer");
-            if (existingBorderLayer) {
-                [existingBorderLayer removeFromSuperlayer];
-                objc_setAssociatedObject(self, "borderLayer", nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            }
+    // Bottom-right corner
+    CGPathAddArcToPoint(path, NULL, bounds.size.width, bounds.size.height, bounds.size.width - cornerRadius, bounds.size.height, cornerRadius);
     
-            // Create a mask layer
-            CAShapeLayer *maskLayer = [CAShapeLayer layer];
+    // Bottom edge
+    CGPathAddLineToPoint(path, NULL, cornerRadius, bounds.size.height);
     
-            // Create a path that subtracts the corner radius
-            CGRect bounds = window.contentView.bounds;
-            CGMutablePathRef path = [self createRoundedPathWithBounds:bounds cornerRadius:cornerRadius];
+    // Bottom-left corner
+    CGPathAddArcToPoint(path, NULL, 0, bounds.size.height, 0, bounds.size.height - cornerRadius, cornerRadius);
     
-            maskLayer.path = path;
+    // Left edge
+    CGPathAddLineToPoint(path, NULL, 0, cornerRadius);
     
-            // Apply the mask to the window's content view layer
-            contentLayer.mask = maskLayer;
+    // Top-left corner
+    CGPathAddArcToPoint(path, NULL, 0, 0, cornerRadius, 0, cornerRadius);
     
-            // Create a border layer
-            CAShapeLayer *borderLayer = [CAShapeLayer layer];
-            borderLayer.path = path;
-            borderLayer.fillColor = [NSColor clearColor].CGColor;
-            borderLayer.strokeColor = [NSColor whiteColor].CGColor;
-            borderLayer.lineWidth = borderWidth;
-            borderLayer.frame = bounds;
+    CGPathCloseSubpath(path);
     
-            // Add the border layer above the content layer
-            [contentLayer addSublayer:borderLayer];
-    
-            // Associate the border layer for future reference
-            objc_setAssociatedObject(self, "borderLayer", borderLayer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    
-            // Create an outline layer
-            CAShapeLayer *outlineLayer = [CAShapeLayer layer];
-            outlineLayer.path = path;
-            outlineLayer.fillColor = [NSColor clearColor].CGColor;
-            outlineLayer.strokeColor = [NSColor darkGrayColor].CGColor;
-            outlineLayer.lineWidth = borderWidth;
-            outlineLayer.frame = bounds;
-    
-            // Disable animations for the outline layer
-            outlineLayer.actions = @{
-              @"strokeColor" : [NSNull null],
-              @"lineWidth" : [NSNull null],
-              @"path" : [NSNull null]
-            };
-    
-            // Add the outline layer as the top-most layer
-            [contentLayer addSublayer:outlineLayer];
-    
-            // Store the outline layer for later updates
-            objc_setAssociatedObject(self, "outlineLayer", outlineLayer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    
-            CGPathRelease(path);
-    
-            // Modify window properties
-            window.opaque = NO;
-            window.backgroundColor = [NSColor clearColor];
-            window.hasShadow = YES;
-    
-            // Set window to have a full-size content view
-            window.styleMask |= NSWindowStyleMaskFullSizeContentView;
-    
-            // Remove title bar
-            window.titlebarAppearsTransparent = YES;
-            window.titleVisibility = NSWindowTitleHidden;
-    
-            // Set up notifications for active/inactive state and resizing
-            [[NSNotificationCenter defaultCenter]
-                addObserver:self
-                   selector:@selector(windowDidResignKey:)
-                       name:NSWindowDidResignKeyNotification
-                     object:window];
-            [[NSNotificationCenter defaultCenter]
-                addObserver:self
-                   selector:@selector(windowDidBecomeKey:)
-                       name:NSWindowDidBecomeKeyNotification
-                     object:window];
-            [[NSNotificationCenter defaultCenter]
-                addObserver:self
-                   selector:@selector(windowDidResize:)
-                       name:NSWindowDidResizeNotification
-                     object:window];
-            [[NSNotificationCenter defaultCenter]
-                addObserver:self
-                   selector:@selector(windowWillStartLiveResize:)
-                       name:NSWindowWillStartLiveResizeNotification
-                     object:window];
-            [[NSNotificationCenter defaultCenter]
-                addObserver:self
-                   selector:@selector(windowDidEndLiveResize:)
-                       name:NSWindowDidEndLiveResizeNotification
-                     object:window];
-    
-            // Initial update of border color
-            [self updateBorderColorForWindow:window];
-        } else {
-            DLog("Failed to add window borders: contentView.layer is nil");
-        }
+    return path;
+}
+
+- (void)addWindowBorders {
+    if (!enableWindowBorders) {
+        return;
     }
-    
-    /**
-     * Updates the mask and outline layers for the window based on its bounds.
-     * This method ensures the contentView is layer-backed, creates or updates
-     * the mask and outline layers, and sets their paths and properties.
-     *
-     * @param window The window whose mask and outline layers need to be updated.
-     */
-    - (void)updateMaskAndOutlineForWindow:(NSWindow *)window {
-        if (!enableWindowBorders) {
-            return;
+
+    NSDictionary *config = [self loadConfig];
+    CGFloat borderWidth = [self borderWidthFromConfig:config];
+    CGFloat cornerRadius = [self cornerRadiusFromConfig:config];
+    NSColor *activeColor = [self activeColorFromConfig:config];
+    NSColor *inactiveColor = [self inactiveColorFromConfig:config];
+
+    NSWindow *window = (NSWindow *)self;
+
+    // Ensure the contentView is layer-backed
+    window.contentView.wantsLayer = YES;
+
+    CALayer *contentLayer = window.contentView.layer;
+    if (contentLayer) {
+        // Remove existing mask and border/outline layers if they exist
+        if (contentLayer.mask) {
+            [contentLayer.mask removeFromSuperlayer];
+            contentLayer.mask = nil;
         }
-    
-        CALayer *contentLayer = window.contentView.layer;
-        CGFloat cornerRadius = 40.0;
-    
-        // Retrieve existing outline layer
-        CAShapeLayer *outlineLayer = objc_getAssociatedObject(self, "outlineLayer");
-        CAShapeLayer *borderLayer = objc_getAssociatedObject(self, "borderLayer");
-        
-        if (!outlineLayer || !borderLayer) {
-            // If layers don't exist, re-add window borders
-            [self addWindowBorders];
-            return;
+        CAShapeLayer *existingOutlineLayer = objc_getAssociatedObject(self, "outlineLayer");
+        if (existingOutlineLayer) {
+            [existingOutlineLayer removeFromSuperlayer];
+            objc_setAssociatedObject(self, "outlineLayer", nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
-    
-        // Update mask layer
-        CAShapeLayer *maskLayer = (CAShapeLayer *)contentLayer.mask;
-        if (maskLayer) {
-            CGRect bounds = window.contentView.bounds;
-            CGMutablePathRef path = [self createRoundedPathWithBounds:bounds cornerRadius:cornerRadius];
-            maskLayer.path = path;
-            borderLayer.path = path;
-            outlineLayer.path = path;
-            borderLayer.frame = bounds;
-            outlineLayer.frame = bounds;
-            CGPathRelease(path);
+        CAShapeLayer *existingBorderLayer = objc_getAssociatedObject(self, "borderLayer");
+        if (existingBorderLayer) {
+            [existingBorderLayer removeFromSuperlayer];
+            objc_setAssociatedObject(self, "borderLayer", nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
-    
-        // Update outline layer properties
-        outlineLayer.strokeColor = window.isKeyWindow ? [NSColor whiteColor].CGColor : [NSColor darkGrayColor].CGColor;
-    }
-    
-    /**
-     * Updates the border color of the window based on its key state.
-     * If the window is the key window, the border color is set to white.
-     * Otherwise, it is set to dark gray.
-     *
-     * @param window The window whose border color needs to be updated.
-     */
-    - (void)updateBorderColorForWindow:(NSWindow *)window {
-        if (!enableWindowBorders) {
-            return;
-        }
-    
-        CAShapeLayer *outlineLayer = objc_getAssociatedObject(self, "outlineLayer");
-        if (!outlineLayer) {
-            // If outlineLayer doesn't exist, re-add window borders
-            [self addWindowBorders];
-            return;
-        }
-    
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-        outlineLayer.strokeColor = window.isKeyWindow ? [NSColor whiteColor].CGColor : [NSColor darkGrayColor].CGColor;
-        [CATransaction commit];
-    }
-    
-    
-    #pragma mark - Notification Handlers
-    
-    - (void)windowDidResignKey:(NSNotification *)notification {
-        if (!enableWindowBorders) {
-            return;
-        }
-    
-        NSWindow *window = (NSWindow *)self;
+
+        // Create a mask layer
+        CAShapeLayer *maskLayer = [CAShapeLayer layer];
+
+        // Create a path that subtracts the corner radius
+        CGRect bounds = window.contentView.bounds;
+        CGMutablePathRef path = [self createRoundedPathWithBounds:bounds cornerRadius:cornerRadius];
+
+        maskLayer.path = path;
+
+        // Apply the mask to the window's content view layer
+        contentLayer.mask = maskLayer;
+
+        // Create a border layer
+        CAShapeLayer *borderLayer = [CAShapeLayer layer];
+        borderLayer.path = path;
+        borderLayer.fillColor = [NSColor clearColor].CGColor;
+        borderLayer.strokeColor = activeColor.CGColor;
+        borderLayer.lineWidth = borderWidth;
+        borderLayer.frame = bounds;
+
+        // Add the border layer above the content layer
+        [contentLayer addSublayer:borderLayer];
+
+        // Associate the border layer for future reference
+        objc_setAssociatedObject(self, "borderLayer", borderLayer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+        // Create an outline layer
+        CAShapeLayer *outlineLayer = [CAShapeLayer layer];
+        outlineLayer.path = path;
+        outlineLayer.fillColor = [NSColor clearColor].CGColor;
+        outlineLayer.strokeColor = inactiveColor.CGColor;
+        outlineLayer.lineWidth = borderWidth;
+        outlineLayer.frame = bounds;
+
+        // Disable animations for the outline layer
+        outlineLayer.actions = @{
+          @"strokeColor" : [NSNull null],
+          @"lineWidth" : [NSNull null],
+          @"path" : [NSNull null]
+        };
+
+        // Add the outline layer as the top-most layer
+        [contentLayer addSublayer:outlineLayer];
+
+        // Store the outline layer for later updates
+        objc_setAssociatedObject(self, "outlineLayer", outlineLayer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+        CGPathRelease(path);
+
+        // Modify window properties
+        window.opaque = NO;
+        window.backgroundColor = [NSColor clearColor];
+        window.hasShadow = YES;
+
+        // Set window to have a full-size content view
+        window.styleMask |= NSWindowStyleMaskFullSizeContentView;
+
+        // Remove title bar
+        window.titlebarAppearsTransparent = YES;
+        window.titleVisibility = NSWindowTitleHidden;
+
+        // Set up notifications for active/inactive state and resizing
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(windowDidResignKey:)
+                   name:NSWindowDidResignKeyNotification
+                 object:window];
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(windowDidBecomeKey:)
+                   name:NSWindowDidBecomeKeyNotification
+                 object:window];
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(windowDidResize:)
+                   name:NSWindowDidResizeNotification
+                 object:window];
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(windowWillStartLiveResize:)
+                   name:NSWindowWillStartLiveResizeNotification
+                 object:window];
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(windowDidEndLiveResize:)
+                   name:NSWindowDidEndLiveResizeNotification
+                 object:window];
+
+        // Initial update of border color
         [self updateBorderColorForWindow:window];
+    } else {
+        DLog("Failed to add window borders: contentView.layer is nil");
     }
-    
-    - (void)windowDidBecomeKey:(NSNotification *)notification {
-        if (!enableWindowBorders) {
-            return;
-        }
-    
-        NSWindow *window = (NSWindow *)self;
-        [self updateBorderColorForWindow:window];
+}
+
+- (void)updateMaskAndOutlineForWindow:(NSWindow *)window {
+    if (!enableWindowBorders) {
+        return;
     }
+
+    NSDictionary *config = [self loadConfig];
+    CGFloat cornerRadius = [self cornerRadiusFromConfig:config];
+    CGFloat borderWidth = [self borderWidthFromConfig:config];
+
+    CALayer *contentLayer = window.contentView.layer;
+
+    // Retrieve existing outline layer
+    CAShapeLayer *outlineLayer = objc_getAssociatedObject(self, "outlineLayer");
+    CAShapeLayer *borderLayer = objc_getAssociatedObject(self, "borderLayer");
     
-    - (void)windowWillStartLiveResize:(NSNotification *)notification {
-        if (!enableWindowBorders) {
-            return;
-        }
-    
-        NSWindow *window = (NSWindow *)self;
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-        [self updateMaskAndOutlineForWindow:window];
-        [CATransaction commit];
+    if (!outlineLayer || !borderLayer) {
+        // If layers don't exist, re-add window borders
+        [self addWindowBorders];
+        return;
     }
-    
-    - (void)windowDidResize:(NSNotification *)notification {
-        if (!enableWindowBorders) {
-            return;
-        }
-    
-        NSWindow *window = (NSWindow *)self;
-        [CATransaction begin];
-        [CATransaction setDisableActions:YES];
-        [self updateMaskAndOutlineForWindow:window];
-        [CATransaction commit];
+
+    // Update mask layer
+    CAShapeLayer *maskLayer = (CAShapeLayer *)contentLayer.mask;
+    if (maskLayer) {
+        CGRect bounds = window.contentView.bounds;
+        CGMutablePathRef path = [self createRoundedPathWithBounds:bounds cornerRadius:cornerRadius];
+        maskLayer.path = path;
+        borderLayer.path = path;
+        outlineLayer.path = path;
+        borderLayer.frame = bounds;
+        outlineLayer.frame = bounds;
+        borderLayer.lineWidth = borderWidth;
+        outlineLayer.lineWidth = borderWidth;
+        CGPathRelease(path);
     }
-    
-    - (void)windowDidEndLiveResize:(NSNotification *)notification {
-        if (!enableWindowBorders) {
-            return;
-        }
-    
-        NSWindow *window = (NSWindow *)self;
-        [self updateBorderColorForWindow:window];
-        [self modifyTitlebarAppearance];
-        [window.contentView setNeedsDisplay:YES];
-        [window display];
+
+    // Update outline layer properties
+    NSColor *activeColor = [self activeColorFromConfig:config];
+    NSColor *inactiveColor = [self inactiveColorFromConfig:config];
+    outlineLayer.strokeColor = window.isKeyWindow ? activeColor.CGColor : inactiveColor.CGColor;
+}
+
+- (void)updateBorderColorForWindow:(NSWindow *)window {
+    if (!enableWindowBorders) {
+        return;
     }
-    
-    @end
+
+    NSDictionary *config = [self loadConfig];
+    NSColor *activeColor = [self activeColorFromConfig:config];
+    NSColor *inactiveColor = [self inactiveColorFromConfig:config];
+
+    CAShapeLayer *outlineLayer = objc_getAssociatedObject(self, "outlineLayer");
+    if (!outlineLayer) {
+        // If outlineLayer doesn't exist, re-add window borders
+        [self addWindowBorders];
+        return;
+    }
+
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    outlineLayer.strokeColor = window.isKeyWindow ? activeColor.CGColor : inactiveColor.CGColor;
+    [CATransaction commit];
+}
+
+
+#pragma mark - Notification Handlers
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+    if (!enableWindowBorders) {
+        return;
+    }
+
+    NSWindow *window = (NSWindow *)self;
+    [self updateBorderColorForWindow:window];
+}
+
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    if (!enableWindowBorders) {
+        return;
+    }
+
+    NSWindow *window = (NSWindow *)self;
+    [self updateBorderColorForWindow:window];
+}
+
+- (void)windowWillStartLiveResize:(NSNotification *)notification {
+    if (!enableWindowBorders) {
+        return;
+    }
+
+    NSWindow *window = (NSWindow *)self;
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    [self updateMaskAndOutlineForWindow:window];
+    [CATransaction commit];
+}
+
+- (void)windowDidResize:(NSNotification *)notification {
+    if (!enableWindowBorders) {
+        return;
+    }
+
+    NSWindow *window = (NSWindow *)self;
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    [self updateMaskAndOutlineForWindow:window];
+    [CATransaction commit];
+}
+
+- (void)windowDidEndLiveResize:(NSNotification *)notification {
+    if (!enableWindowBorders) {
+        return;
+    }
+
+    NSWindow *window = (NSWindow *)self;
+    [self updateBorderColorForWindow:window];
+    [self modifyTitlebarAppearance];
+    [window.contentView setNeedsDisplay:YES];
+    [window display];
+}
+
+@end
