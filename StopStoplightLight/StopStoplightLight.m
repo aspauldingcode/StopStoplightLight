@@ -142,6 +142,9 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
 
 #pragma mark - Window Border Methods
 
+// delete built-in mask without using PaintCan plugin
+// FIXME: THIS IS NOT IMPLEMENTED YET
+
 - (NSDictionary *)loadConfig {
     NSString *configPath = [NSString stringWithFormat:@"%@/.config/macwmfx/config", NSHomeDirectory()];
     NSData *configData = [NSData dataWithContentsOfFile:configPath];
@@ -159,7 +162,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
 
 - (CGFloat)cornerRadiusFromConfig:(NSDictionary *)config {
     NSNumber *cornerRadius = config[@"outlineWindow"][@"cornerRadius"];
-    return cornerRadius ? [cornerRadius floatValue] : 40.0;
+    return cornerRadius ? [cornerRadius floatValue] : 0.0;
 }
 
 - (CGFloat)borderWidthFromConfig:(NSDictionary *)config {
@@ -309,7 +312,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         // Modify window properties
         window.opaque = NO;
         window.backgroundColor = [NSColor clearColor];
-        window.hasShadow = YES;
+        window.hasShadow = NO;
 
         // Set window to have a full-size content view
         window.styleMask |= NSWindowStyleMaskFullSizeContentView;
