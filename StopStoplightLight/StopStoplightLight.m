@@ -285,9 +285,6 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
             window.titlebarAppearsTransparent = YES;
             window.titleVisibility = NSWindowTitleHidden;
     
-            // Make sure the window can still be moved
-            window.movableByWindowBackground = YES;
-    
             // Set up notifications for active/inactive state and resizing
             [[NSNotificationCenter defaultCenter]
                 addObserver:self
