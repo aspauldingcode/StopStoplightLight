@@ -158,13 +158,13 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
 }
 
 - (CGFloat)cornerRadiusFromConfig:(NSDictionary *)config {
-    NSString *cornerRadiusString = config[@"outlineWindow"][@"cornerRadius"];
-    return cornerRadiusString.length > 0 ? [cornerRadiusString floatValue] : 40.0;
+    NSNumber *cornerRadius = config[@"outlineWindow"][@"cornerRadius"];
+    return cornerRadius ? [cornerRadius floatValue] : 40.0;
 }
 
 - (CGFloat)borderWidthFromConfig:(NSDictionary *)config {
-    NSString *widthString = config[@"outlineWindow"][@"width"];
-    return widthString.length > 0 ? [widthString floatValue] : 2.0;
+    NSNumber *width = config[@"outlineWindow"][@"width"];
+    return width ? [width floatValue] : 2.0;
 }
 
 - (NSColor *)activeColorFromConfig:(NSDictionary *)config {
