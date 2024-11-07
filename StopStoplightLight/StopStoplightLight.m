@@ -26,14 +26,16 @@ static NSString *const preferencesSuiteName =
     @"com.shishkabibal.StopStoplightLight";
 
 // Feature flags
-static BOOL enableTrafficLightsDisabler = YES;
-static BOOL enableTitlebarDisabler = YES;
-static BOOL enableResizability = YES;
-static BOOL enableWindowBorders = YES;
+static BOOL enableTrafficLightsDisabler;
+static BOOL enableTitlebarDisabler;
+static BOOL enableResizability;
+static BOOL enableWindowBorders;
 
 #pragma mark - Main Implementation
 
 @interface StopStoplightLight ()
+
++ (NSDictionary *)loadConfig;
 
 @end
 
@@ -44,12 +46,36 @@ static BOOL enableWindowBorders = YES;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     sharedInstance = [[self alloc] init];
+    [sharedInstance initializeFeatureFlags];
   });
   return sharedInstance;
 }
 
 + (void)load {
   [self sharedInstance];
+}
+
+- (void)initializeFeatureFlags {
+    NSDictionary *config = [[self class] loadConfig];
+    enableTrafficLightsDisabler = [config[@"disableTrafficLights"] boolValue];
+    enableTitlebarDisabler = [config[@"disableTitlebar"] boolValue];
+    enableResizability = [config[@"disableWindowSizeConstraints"] boolValue];
+    enableWindowBorders = [config[@"outlineWindow"][@"enabled"] boolValue];
+}
+
++ (NSDictionary *)loadConfig {
+    NSString *configPath = [NSString stringWithFormat:@"%@/.config/macwmfx/config", NSHomeDirectory()];
+    NSData *configData = [NSData dataWithContentsOfFile:configPath];
+    if (configData) {
+        NSError *error;
+        NSDictionary *config = [NSJSONSerialization JSONObjectWithData:configData options:0 error:&error];
+        if (error) {
+            DLog("Error parsing config file: %@", error);
+            return @{};
+        }
+        return config;
+    }
+    return @{};
 }
 
 @end
@@ -145,21 +171,6 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
 // delete built-in mask without using PaintCan plugin
 // FIXME: THIS IS NOT IMPLEMENTED YET
 
-- (NSDictionary *)loadConfig {
-    NSString *configPath = [NSString stringWithFormat:@"%@/.config/macwmfx/config", NSHomeDirectory()];
-    NSData *configData = [NSData dataWithContentsOfFile:configPath];
-    if (configData) {
-        NSError *error;
-        NSDictionary *config = [NSJSONSerialization JSONObjectWithData:configData options:0 error:&error];
-        if (error) {
-            DLog("Error parsing config file: %@", error);
-            return @{};
-        }
-        return config;
-    }
-    return @{};
-}
-
 - (CGFloat)cornerRadiusFromConfig:(NSDictionary *)config {
     NSNumber *cornerRadius = config[@"outlineWindow"][@"cornerRadius"];
     return cornerRadius ? [cornerRadius floatValue] : 0.0;
@@ -231,7 +242,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         return;
     }
 
-    NSDictionary *config = [self loadConfig];
+    NSDictionary *config = [StopStoplightLight loadConfig];
     CGFloat borderWidth = [self borderWidthFromConfig:config];
     CGFloat cornerRadius = [self cornerRadiusFromConfig:config];
     NSColor *activeColor = [self activeColorFromConfig:config];
@@ -360,7 +371,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         return;
     }
 
-    NSDictionary *config = [self loadConfig];
+    NSDictionary *config = [StopStoplightLight loadConfig];
     CGFloat cornerRadius = [self cornerRadiusFromConfig:config];
     CGFloat borderWidth = [self borderWidthFromConfig:config];
 
@@ -402,7 +413,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         return;
     }
 
-    NSDictionary *config = [self loadConfig];
+    NSDictionary *config = [StopStoplightLight loadConfig];
     NSColor *activeColor = [self activeColorFromConfig:config];
     NSColor *inactiveColor = [self inactiveColorFromConfig:config];
 
